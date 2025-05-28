@@ -6,13 +6,14 @@ from user_app.models import User
 class SpecializationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialization
-        fields = ['id', 'name']
+        fields = '__all__'
+
 
 
 class DoctorUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name']
+        fields = '__all__'
 
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
@@ -21,13 +22,20 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DoctorProfile
-        fields = ['user', 'specialization', 'phone', 'education', 'experience_years', 'bio']
+        fields = '__all__'
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    patient = DoctorUserSerializer(read_only=True)
-    doctor = DoctorUserSerializer(read_only=True)
-
     class Meta:
         model = Appointment
-        fields = ['id', 'patient', 'doctor', 'date', 'reason']
+        fields = '__all__'
+
+    def validate(self, data):
+        user = self.context['request'].user
+        if not user.is_active:
+            raise serializers.ValidationError("Вы должны подтвердить email, прежде чем записаться.")
+        return data
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)

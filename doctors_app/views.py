@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from .models import DoctorProfile, Specialization, Appointment
 from .serializers import DoctorProfileSerializer, SpecializationSerializer, AppointmentSerializer
+from rest_framework import generics, permissions
 
 class DoctorProfileViewSet(viewsets.ModelViewSet):
     queryset = DoctorProfile.objects.all()
@@ -10,15 +11,13 @@ class SpecializationViewSet(viewsets.ModelViewSet):
     queryset = Specialization.objects.all()
     serializer_class = SpecializationSerializer
 
-class AppointmentViewSet(viewsets.ModelViewSet):
-    queryset = Appointment.objects.all()
+
+class AppointmentCreateView(generics.CreateAPIView):
     serializer_class = AppointmentSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'doctorprofile'):
-            return self.queryset.filter(doctor__user=user)
-        return self.queryset.none()  # Return an empty queryset if the user is not authenticated or not a doctor
+        return Appointment.objects.filter(user=self.request.user)
 
 
 
